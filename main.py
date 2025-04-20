@@ -1,88 +1,98 @@
 from telethon import TelegramClient, events
 import os
-from flask import Flask
+from flask import Flask, render_template_string
 from threading import Thread
-import time
-import requests
 
-# 🔁 Uptime com Flask + Ping
+# 🟢 Painel visual com status
+HTML_PAINEL = """
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Bot VIP - Status</title>
+  <style>
+    body {
+      background: #0f0f0f;
+      font-family: Arial, sans-serif;
+      color: #ffffff;
+      text-align: center;
+      padding: 50px;
+    }
+    .card {
+      background: #1e1e1e;
+      padding: 30px;
+      border-radius: 12px;
+      max-width: 500px;
+      margin: 0 auto;
+      box-shadow: 0 0 10px rgba(255, 0, 85, 0.3);
+    }
+    h1 {
+      color: #ff0055;
+    }
+    .status {
+      font-size: 18px;
+      margin-top: 15px;
+    }
+    a {
+      color: #00d9ff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>💎 Bot do Grupo VIP</h1>
+    <div class="status">
+      Status: <strong style="color: #00ff88">Online ✅</strong><br><br>
+      Última atualização automática funcionando.
+    </div>
+    <div style="margin-top: 30px;">
+      <a href="https://t.me/SEU_GRUPO_VIP_AQUI" target="_blank">🔗 Acessar Grupo VIP</a>
+    </div>
+  </div>
+</body>
+</html>
+"""
+
 app = Flask('')
 
 @app.route('/')
 def home():
-    return "Bot está online!"
-
-def run_flask():
-    app.run(host='0.0.0.0', port=8080)
+    return render_template_string(HTML_PAINEL)
 
 def manter_online():
-    Thread(target=run_flask).start()
+    Thread(target=lambda: app.run(host='0.0.0.0', port=8080)).start()
 
-    def ping():
-        while True:
-            try:
-                requests.get("https://SEULINK.railway.app")  # troque pelo seu link Railway
-                print("🔁 Ping enviado.")
-            except:
-                print("⚠️ Erro ao enviar ping.")
-            time.sleep(280)
-
-    Thread(target=ping).start()
-
-manter_online()
-
-# 🔐 Credenciais do Telegram
+# 🔐 API do Telegram
 api_id = int(os.environ.get("API_ID"))
 api_hash = os.environ.get("API_HASH")
 client = TelegramClient("session", api_id, api_hash)
 
-# 🛰️ Grupos
+# 🛰️ Canais VIP (apenas mídia, sem legenda)
 origens = [-1002368866066, -4686930379]
 destino_id = -1002632937431
-
-# 🔁 Álbuns já enviados
 grouped_processados = set()
-
-# ♻️ Limpeza periódica do cache
-def limpar_cache():
-    while True:
-        time.sleep(1800)
-        grouped_processados.clear()
-        print("♻️ Cache de grouped_processados limpo.")
-Thread(target=limpar_cache).start()
 
 @client.on(events.NewMessage(chats=origens))
 async def handler(event):
     msg = event.message
-
-    # Verifica se é álbum
     if msg.grouped_id:
         if msg.grouped_id in grouped_processados:
             return
         grouped_processados.add(msg.grouped_id)
-
-        print("📦 Álbum detectado.")
-        mensagens = await client.get_messages(event.chat_id, limit=20, min_id=msg.id - 10)
-        album = [m for m in mensagens if m.grouped_id == msg.grouped_id]
-        album = list(reversed(album))
-
-        midias = [m.media for m in album if m.media]
-
-        if midias:
-            print(f"🎯 Enviando álbum com {len(midias)} mídias...")
-            await client.send_file(destino_id, midias)
-        else:
-            print("⚠️ Nenhuma mídia no álbum.")
+        print("📦 Álbum VIP detectado.")
+        messages = await client.get_messages(event.chat_id, limit=20, min_id=msg.id - 10)
+        grupo = [m for m in messages if m.grouped_id == msg.grouped_id]
+        grupo = list(reversed(grupo))
+        media_files = [m.media for m in grupo if m.media]
+        if media_files:
+            print(f"🎯 Enviando álbum com {len(media_files)} mídias...")
+            await client.send_file(destino_id, media_files)
     elif msg.photo or msg.video:
-        print("📸 Mídia única detectada.")
+        print("📸 Mídia única VIP detectada.")
         await client.send_file(destino_id, msg.media)
-    else:
-        print("❌ Ignorado (sem mídia).")
 
-# 🚀 Inicia o bot
-async def main():
-    await client.start()
-    print("🤖 Bot VIP rodando sem legenda nem botão.")
-    await client.run_until_disconnected()
-
-client.loop.run_until_complete(main())
+manter_online()
+client.start()
+print("🤖 Bot do Grupo VIP rodando com painel ativo...")
+client.run_until_disconnected()
