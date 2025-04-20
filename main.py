@@ -69,7 +69,7 @@ api_hash = os.environ.get("API_HASH")
 client = TelegramClient("session", api_id, api_hash)
 
 # 🛰️ Canais VIP (apenas mídia, sem legenda)
-origens = [-1002368866066, -4686930379]
+origens = [-1002368866066, -4686930379, -1002060060299]
 destino_id = -1002632937431
 grouped_processados = set()
 
