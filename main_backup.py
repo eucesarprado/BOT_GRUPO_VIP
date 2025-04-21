@@ -8,7 +8,7 @@ api_hash = os.environ.get("API_HASH")
 client = TelegramClient("session4", api_id, api_hash)
 
 origem_id = -1002368866066
-destino_id = -1002678360646
+destino_id = -1002632937431
 enviados_file = "ids_enviados.txt"
 
 def carregar_ids_enviados():
