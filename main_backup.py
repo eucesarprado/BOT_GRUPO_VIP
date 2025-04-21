@@ -5,7 +5,7 @@ import time
 
 api_id = int(os.environ.get("API_ID"))
 api_hash = os.environ.get("API_HASH")
-client = TelegramClient("session4", api_id, api_hash)
+client = TelegramClient("session2", api_id, api_hash)
 
 origem_id = -1002368866066
 destino_id = -1002632937431
